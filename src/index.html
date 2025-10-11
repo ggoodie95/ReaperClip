@@ -1,0 +1,54 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>ReaperClip</title>
+  <link rel="stylesheet" href="./styles.css">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+</head>
+<body>
+  <div id="wrap">
+    <div id="drag-bar"></div>
+    <div id="controls">
+      <input id="search" type="text" placeholder="Search clipboard… (↑/↓ to navigate, Enter to copy)" autofocus />
+      <details id="imgDrawer">
+        <summary>IMG</summary>
+        <div id="img-list"></div>
+      </details>
+      <details id="settingsDrawer">
+        <summary>⚙</summary>
+        <form id="settingsForm">
+          <div class="brand">
+            <img id="reaperIcon" src="./assets/ggoodie95.png" alt="ggoodie95 reaper mascot" draggable="false" />
+            <div class="brand-text">
+              <span class="brand-name">ggoodie95</span>
+              <span class="brand-tagline">Clipboard magic, reaper approved.</span>
+            </div>
+          </div>
+          <p class="settings-hint">
+            Hold <kbd>⌃</kbd> while using <kbd>⌘⇧3</kbd> or <kbd>⌘⇧4</kbd> to beam screenshots straight into ReaperClip’s IMG gallery.
+          </p>
+          <div class="divider"></div>
+          <label class="field">
+            <span>Hotkey</span>
+            <input id="hotkeyInput" type="text" autocomplete="off" />
+          </label>
+          <label class="field checkbox">
+            <input id="captureScreenshots" type="checkbox" />
+            <span>Clip screenshots (⌃ + ⌘⇧3/4)</span>
+          </label>
+          <label class="field checkbox">
+            <input id="captureImages" type="checkbox" />
+            <span>Capture copied images</span>
+          </label>
+          <div id="settingsStatus"></div>
+          <button id="settingsSave" type="submit">Save</button>
+        </form>
+      </details>
+    </div>
+    <ul id="list"></ul>
+    <div id="hint">Showing the last 10 text clips. Open IMG to access recent screenshots.</div>
+  </div>
+  <script src="./renderer.js"></script>
+</body>
+</html>

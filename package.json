@@ -1,0 +1,12 @@
+{
+  "name": "reaperclip",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "dependencies": {
+    "electron": "^38.2.1"
+  }
+}

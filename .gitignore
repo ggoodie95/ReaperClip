@@ -1,0 +1,4 @@
+node_modules/
+ReaperClip.app/
+dist/
+*.log
