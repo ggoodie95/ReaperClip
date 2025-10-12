@@ -139,9 +139,19 @@ ipcMain.handle('set-clip', (_e, item) => {
 
   if (item.kind === 'image' && item.data?.dataUrl) {
     const img = nativeImage.createFromDataURL(item.data.dataUrl);
-    const payload = { image: img };
-    if (item.text) payload.text = item.text;
-    clipboard.write(payload);
+    clipboard.writeImage(img);
+    try {
+      const png = img.toPNG();
+      if (png?.length) clipboard.writeBuffer('public.png', png);
+    } catch (err) {
+      console.warn('[clipboard] failed to write public.png buffer', err);
+    }
+    try {
+      const tiff = img.toTIFF();
+      if (tiff?.length) clipboard.writeBuffer('public.tiff', tiff);
+    } catch (err) {
+      console.warn('[clipboard] failed to write public.tiff buffer', err);
+    }
   } else {
     const text = item.data?.text ?? item.text ?? '';
     const payload = { text };

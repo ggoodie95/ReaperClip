@@ -117,6 +117,13 @@ function applyHistory(hist) {
   state.textIndex = 0;
 }
 
+function formatImageDimensions(width, height) {
+  const w = Number(width) || 0;
+  const h = Number(height) || 0;
+  if (!w || !h) return '';
+  return `${w} x ${h}`;
+}
+
 function renderImages() {
   const container = $('#img-list');
   if (!container) return;
@@ -135,18 +142,47 @@ function renderImages() {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'img-item';
+    const { width, height, dataUrl } = item.data ?? {};
+    const dims = formatImageDimensions(width, height);
+    const label = item.text || 'Clipboard image';
+    button.title = dims ? `${label} (${dims})` : label;
 
-    if (item.data?.dataUrl) {
+    if (dataUrl) {
+      const preview = document.createElement('div');
+      preview.className = 'img-preview';
+      if (width && height) {
+        preview.style.aspectRatio = `${width} / ${height}`;
+      }
+
       const img = document.createElement('img');
-      img.src = item.data.dataUrl;
-      img.alt = item.text;
+      img.src = dataUrl;
+      img.alt = label;
       img.draggable = false;
-      button.appendChild(img);
+      preview.appendChild(img);
+      button.appendChild(preview);
+    } else {
+      const placeholder = document.createElement('div');
+      placeholder.className = 'img-preview img-preview--empty';
+      placeholder.textContent = 'Image unavailable';
+      button.appendChild(placeholder);
     }
 
+    const meta = document.createElement('div');
+    meta.className = 'img-meta';
+
     const caption = document.createElement('span');
-    caption.textContent = item.text;
-    button.appendChild(caption);
+    caption.className = 'img-label';
+    caption.textContent = label;
+    meta.appendChild(caption);
+
+    if (dims) {
+      const dimEl = document.createElement('span');
+      dimEl.className = 'img-dims';
+      dimEl.textContent = dims;
+      meta.appendChild(dimEl);
+    }
+
+    button.appendChild(meta);
 
     button.addEventListener('click', () => {
       window.clipAPI.setClip(item);
