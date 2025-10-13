@@ -71,7 +71,6 @@ If you want a production build, package with your preferred Electron packager (e
 ## Credits
 
 - Clipboard watcher, UI, and packaging: **ggoodie95**
-- Mascot art: reaper artwork by **ggoodie95** (keep it with the project—this app is the reaper’s home).
 
 ## License
 
