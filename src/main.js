@@ -115,6 +115,9 @@ function showOverlayAtCursor() {
   win.show();
   win.focus();
   win.webContents.send('history-updated', store.peek(20));
+  if (process.platform === 'darwin') {
+    setTimeout(ensureDockHidden, 0);
+  }
 }
 
 function hideOverlay() {
@@ -123,12 +126,11 @@ function hideOverlay() {
   if (typeof win.setVisibleOnAllWorkspaces === 'function') {
     win.setVisibleOnAllWorkspaces(false);
   }
+  ensureDockHidden();
 }
 
 app.whenReady().then(() => {
-  if (app.dock && typeof app.dock.hide === 'function') {
-    app.dock.hide();
-  }
+  ensureDockHidden();
 
   createWindow();
   createTray();
@@ -497,7 +499,7 @@ function createTray() {
       },
       {
         label: 'Hide ReaperClip',
-        click: () => win?.hide()
+        click: () => hideOverlay()
       },
       { type: 'separator' },
       {
@@ -521,7 +523,7 @@ function createTray() {
 function toggleFromTray(bounds) {
   if (!win) return;
   if (win.isVisible()) {
-    win.hide();
+    hideOverlay();
   } else {
     showWindowFromTray(bounds);
   }
@@ -529,6 +531,10 @@ function toggleFromTray(bounds) {
 
 function showWindowFromTray(bounds) {
   if (!win) return;
+
+  if (typeof win.setVisibleOnAllWorkspaces === 'function') {
+    win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  }
 
   const trayBounds = bounds || tray?.getBounds?.();
   const winBounds = win.getBounds();
@@ -555,4 +561,17 @@ function showWindowFromTray(bounds) {
   win.show();
   win.focus();
   win.webContents.send('history-updated', store.peek(20));
+  if (process.platform === 'darwin') {
+    setTimeout(ensureDockHidden, 0);
+  }
+}
+
+function ensureDockHidden() {
+  if (process.platform !== 'darwin') return;
+  if (!app.dock || typeof app.dock.hide !== 'function') return;
+  try {
+    app.dock.hide();
+  } catch (err) {
+    console.warn('[dock] failed to hide dock icon', err);
+  }
 }
