@@ -35,12 +35,15 @@ function createWindow() {
     transparent: true,
     hasShadow: true,
     roundedCorners: true,
+    fullscreenable: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
     },
   });
+
+  win.setAlwaysOnTop(true, 'screen-saver');
 
   win.loadFile(path.join(__dirname, 'index.html'));
 
@@ -86,8 +89,18 @@ function toggleAtCursor() {
   if (!win) return;
 
   if (win.isVisible()) {
-    win.hide();
+    hideOverlay();
     return;
+  }
+
+  showOverlayAtCursor();
+}
+
+function showOverlayAtCursor() {
+  if (!win) return;
+
+  if (typeof win.setVisibleOnAllWorkspaces === 'function') {
+    win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   }
 
   // Position right under the cursor
@@ -102,6 +115,14 @@ function toggleAtCursor() {
   win.show();
   win.focus();
   win.webContents.send('history-updated', store.peek(20));
+}
+
+function hideOverlay() {
+  if (!win) return;
+  win.hide();
+  if (typeof win.setVisibleOnAllWorkspaces === 'function') {
+    win.setVisibleOnAllWorkspaces(false);
+  }
 }
 
 app.whenReady().then(() => {
@@ -167,7 +188,7 @@ ipcMain.handle('set-clip', (_e, item) => {
 });
 
 ipcMain.handle('hide-window', () => {
-  if (win?.isVisible()) win.hide();
+  if (win?.isVisible()) hideOverlay();
 });
 
 ipcMain.handle('get-settings', () => settings);
