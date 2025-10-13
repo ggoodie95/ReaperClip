@@ -18,6 +18,7 @@ let lastTextDigest = '';
 let lastImageDigest = '';
 const IMAGE_PLACEHOLDER_RE = /^\[image \d+x\d+\]$/i;
 const SCREENSHOT_TITLE_RE = /^screenshot \d{4}-\d{2}-\d{2}/i;
+const DOCK_HIDE_SCHEDULE = [0, 40, 180];
 let registeredHotkey = null;
 let tray = null;
 
@@ -44,6 +45,9 @@ function createWindow() {
   });
 
   win.setAlwaysOnTop(true, 'screen-saver');
+  ['show', 'hide', 'focus', 'blur'].forEach((eventName) => {
+    win.on(eventName, ensureDockHidden);
+  });
 
   win.loadFile(path.join(__dirname, 'index.html'));
 
@@ -103,6 +107,8 @@ function showOverlayAtCursor() {
     win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   }
 
+  ensureDockHidden();
+
   // Position right under the cursor
   const pt = screen.getCursorScreenPoint();
   const { width, height } = win.getBounds();
@@ -115,9 +121,7 @@ function showOverlayAtCursor() {
   win.show();
   win.focus();
   win.webContents.send('history-updated', store.peek(20));
-  if (process.platform === 'darwin') {
-    setTimeout(ensureDockHidden, 0);
-  }
+  ensureDockHidden();
 }
 
 function hideOverlay() {
@@ -131,6 +135,11 @@ function hideOverlay() {
 
 app.whenReady().then(() => {
   ensureDockHidden();
+  if (process.platform === 'darwin') {
+    app.on('browser-window-focus', ensureDockHidden);
+    app.on('browser-window-blur', ensureDockHidden);
+    app.on('browser-window-created', ensureDockHidden);
+  }
 
   createWindow();
   createTray();
@@ -536,6 +545,8 @@ function showWindowFromTray(bounds) {
     win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   }
 
+  ensureDockHidden();
+
   const trayBounds = bounds || tray?.getBounds?.();
   const winBounds = win.getBounds();
 
@@ -561,17 +572,28 @@ function showWindowFromTray(bounds) {
   win.show();
   win.focus();
   win.webContents.send('history-updated', store.peek(20));
-  if (process.platform === 'darwin') {
-    setTimeout(ensureDockHidden, 0);
-  }
+  ensureDockHidden();
 }
 
 function ensureDockHidden() {
   if (process.platform !== 'darwin') return;
   if (!app.dock || typeof app.dock.hide !== 'function') return;
-  try {
-    app.dock.hide();
-  } catch (err) {
-    console.warn('[dock] failed to hide dock icon', err);
+  if (app.isReady?.() && typeof app.setActivationPolicy === 'function') {
+    try {
+      app.setActivationPolicy('accessory');
+    } catch (err) {
+      console.warn('[dock] failed to set accessory activation policy', err);
+    }
   }
+  DOCK_HIDE_SCHEDULE.forEach((delay, index) => {
+    setTimeout(() => {
+      try {
+        app.dock.hide();
+      } catch (err) {
+        if (index === 0) {
+          console.warn('[dock] failed to hide dock icon', err);
+        }
+      }
+    }, delay);
+  });
 }
