@@ -5,6 +5,7 @@ import {fileURLToPath} from 'url';
 import {createHash} from 'crypto';
 import {Store} from './store.js';
 import {SettingsStore, getDefaultSettings} from './settings.js';
+import {computeOverlayPosition} from './overlay-position.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -66,7 +67,7 @@ let tray = null;
 function createWindow() {
   win = new BrowserWindow({
     width: 560,
-    height: 380,
+    height: 460,
     minWidth: 420,
     minHeight: 280,
     show: false,
@@ -144,13 +145,12 @@ function showOverlayAtCursor() {
 
   ensureDockHidden();
 
-  // Position right under the cursor
+  // Position right under the cursor, clamped to the display. At 460px tall the
+  // panel would otherwise hang past the bottom edge when the hotkey fires near it.
   const pt = screen.getCursorScreenPoint();
-  const { width, height } = win.getBounds();
-
-  // Small offset to sit just below the cursor
-  const x = Math.max(0, pt.x - Math.floor(width / 2));
-  const y = pt.y + 12;
+  const bounds = win.getBounds();
+  const workArea = screen.getDisplayNearestPoint(pt).workArea;
+  const { x, y } = computeOverlayPosition({ point: pt, bounds, workArea });
 
   win.setPosition(x, y, false);
   win.show();
