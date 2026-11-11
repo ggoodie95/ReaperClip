@@ -57,16 +57,16 @@ export class Store {
     if (!entry) return null;
 
     if (typeof entry === 'string') {
-      const cleaned = entry.replace(/\s+/g, ' ').trim();
-      if (!cleaned) return null;
-      if (IMAGE_PLACEHOLDER_RE.test(cleaned)) return null;
+      const raw = entry;
+      if (!raw.trim()) return null;
+      if (IMAGE_PLACEHOLDER_RE.test(raw)) return null;
       return {
         kind: 'text',
-        text: cleaned,
+        text: raw,
         source: 'legacy',
         fmts: ['text/plain'],
-        data: { text: cleaned },
-        digest: this._digest('text', cleaned, ['text/plain']),
+        data: { text: raw },
+        digest: this._digest('text', raw, ['text/plain']),
         createdAt: new Date().toISOString()
       };
     }
@@ -95,24 +95,24 @@ export class Store {
     }
 
     const originalText = entry.data?.text ?? entry.text ?? '';
-    const cleaned = originalText.replace(/\s+/g, ' ').trim();
-    if (!cleaned) return null;
-    if (IMAGE_PLACEHOLDER_RE.test(cleaned) && entry.kind !== 'image') return null;
+    const raw = typeof originalText === 'string' ? originalText : String(originalText ?? '');
+    if (!raw.trim()) return null;
+    if (IMAGE_PLACEHOLDER_RE.test(raw) && entry.kind !== 'image') return null;
 
     const html = entry.data?.html || entry.html || '';
     const rtf = entry.data?.rtf || entry.rtf || '';
 
     return {
       kind: 'text',
-      text: cleaned,
+      text: raw,
       source: entry.source || 'text',
       fmts,
       data: {
-        text: cleaned,
+        text: raw,
         html,
         rtf
       },
-      digest: entry.digest || this._digest('text', cleaned, fmts),
+      digest: entry.digest || this._digest('text', raw, fmts),
       createdAt
     };
   }

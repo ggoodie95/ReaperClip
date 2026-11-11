@@ -85,9 +85,13 @@ function createWindow() {
     },
   });
 
-  win.setAlwaysOnTop(true, 'screen-saver');
+  win.setAlwaysOnTop(true, 'floating');
   ['show', 'hide', 'focus', 'blur'].forEach((eventName) => {
     win.on(eventName, ensureDockHidden);
+  });
+
+  win.on('blur', () => {
+    if (win && win.isVisible() && !win.webContents.isDevToolsOpened()) hideOverlay();
   });
 
   win.loadFile(path.join(__dirname, 'index.html'));
@@ -98,15 +102,6 @@ function createWindow() {
 
     const textChanged = Boolean(textPayload?.text) && textPayload.digest !== lastTextDigest;
     const imageChanged = Boolean(imagePayload?.data?.dataUrl) && imagePayload.digest !== lastImageDigest;
-
-    console.log('[clipboard poll]', {
-      textPreview: textPayload?.text?.slice(0, 80) ?? '',
-      textSource: textPayload?.source ?? 'none',
-      textChanged,
-      imageLabel: imagePayload?.text ?? '',
-      imageChanged,
-      ts: new Date().toISOString()
-    });
 
     let updated = false;
 
@@ -124,7 +119,6 @@ function createWindow() {
 
     if (updated) {
       const snapshot = store.peek(20);
-      console.log('[ipc] send history-updated length=', snapshot.length);
       win?.webContents.send('history-updated', snapshot);
     }
   }, 800);
@@ -288,10 +282,6 @@ Menu.setApplicationMenu(menu);
 
 function readClipboardPayload() {
   const fmts = clipboard.availableFormats();
-  if (!Array.isArray(globalThis.__lastFmts) || fmts.join('|') !== globalThis.__lastFmts.join('|')) {
-    console.log('[pb] formats=', fmts);
-    globalThis.__lastFmts = fmts;
-  }
 
   // Never retain concealed or transient pasteboard content. Password managers
   // and macOS mark secrets this way; storing them would leak them to disk.
@@ -299,16 +289,13 @@ function readClipboardPayload() {
     return { text: null, image: null };
   }
 
-  const text = (clipboard.readText() || '').trim();
+  const text = clipboard.readText() || '';
   const html = clipboard.readHTML ? clipboard.readHTML() : '';
   const rtf = clipboard.readRTF ? clipboard.readRTF() : '';
   // Only decode the pasteboard image when an image format is actually present,
   // otherwise readImage() decodes a full bitmap on every poll for text clips.
   const hasImageFormat = fmts.some(isImageFormat);
   const img = hasImageFormat && clipboard.readImage ? clipboard.readImage() : null;
-
-  if (html) console.log('[pb] html len=', html.length);
-  if (rtf) console.log('[pb] rtf len=', rtf.length);
 
   let finalText = text;
   let source = 'text';
@@ -421,18 +408,18 @@ function computeDigest(kind, value, fmts) {
 }
 
 function createTextPayload({ text, source = 'text', html = '', rtf = '' }) {
-  const cleaned = (text || '').replace(/\s+/g, ' ').trim();
-  if (!cleaned) return null;
+  const raw = typeof text === 'string' ? text : '';
+  if (!raw.trim()) return null;
   const fmts = ['text/plain'];
   if (html) fmts.push('text/html');
   if (rtf) fmts.push('text/rtf');
   return {
     kind: 'text',
-    text: cleaned,
+    text: raw,
     source,
     fmts,
-    data: { text: cleaned, html, rtf },
-    digest: computeDigest('text', cleaned, fmts),
+    data: { text: raw, html, rtf },
+    digest: computeDigest('text', raw, fmts),
     createdAt: new Date().toISOString()
   };
 }
