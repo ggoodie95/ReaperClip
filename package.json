@@ -8,9 +8,9 @@
     "test": "node --test"
   },
   "dependencies": {
-    "electron": "^38.2.1"
+    "electron": "^42.11.18"
   },
   "allowScripts": {
-    "electron@38.2.1": true
+    "electron@42.11.18": true
   }
 }
