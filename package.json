@@ -9,5 +9,8 @@
   },
   "dependencies": {
     "electron": "^38.2.1"
+  },
+  "allowScripts": {
+    "electron@38.2.1": true
   }
 }
