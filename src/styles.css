@@ -238,8 +238,9 @@ details summary:focus-visible {
   right: 0;
   top: calc(100% + var(--s-2));
   width: min(320px, calc(100vw - 56px));
-  /* Clamp to the panel: the popover opens ~90px down a 380px window, so a fixed
-     320px height would run past the bottom edge and be clipped. */
+  /* Clamp to the panel: the popover opens ~90px below the toolbar, so on the
+     default 460px window a fixed 320px height would run past the bottom edge and
+     be clipped. A window the user has shrunk scrolls instead. */
   max-height: min(320px, calc(100vh - 112px));
   overflow-y: auto;
   padding: var(--s-3);
@@ -262,8 +263,8 @@ details summary:focus-visible {
   right: 0;
   top: calc(100% + var(--s-2));
   width: min(284px, calc(100vw - 56px));
-  /* Same clamp as the image drawer — the full form is taller than the space left
-     under the toolbar in a 380px window, so it scrolls instead of being cut off. */
+  /* Same clamp as the image drawer. At the default 460px height the whole form
+     fits; on a window the user has shrunk it scrolls rather than being cut off. */
   max-height: calc(100vh - 112px);
   overflow-y: auto;
   overscroll-behavior: contain;

@@ -595,23 +595,25 @@ function showWindowFromTray(bounds) {
   const trayBounds = bounds || tray?.getBounds?.();
   const winBounds = win.getBounds();
 
-  let x = 0;
-  let y = 24;
+  // Same placement rules as the hotkey path. This used to carry its own copy of
+  // the clamp (with a different inset and no flip), so a tray click and a hotkey
+  // press could land the panel in different places. Anchor on the tray icon when
+  // we have it, otherwise the cursor, and keep the tray's 6px clearance.
+  const anchor = trayBounds
+    ? {
+        x: Math.round(trayBounds.x + (trayBounds.width / 2)),
+        y: Math.round(trayBounds.y + trayBounds.height),
+      }
+    : screen.getCursorScreenPoint();
 
-  if (trayBounds) {
-    x = Math.round(trayBounds.x + (trayBounds.width / 2) - (winBounds.width / 2));
-    y = Math.round(trayBounds.y + trayBounds.height + 6);
-  } else {
-    const cursor = screen.getCursorScreenPoint();
-    x = Math.round(cursor.x - winBounds.width / 2);
-    y = cursor.y + 12;
-  }
-
-  const display = screen.getDisplayNearestPoint({ x, y });
-  const workArea = display.workArea;
-
-  x = Math.min(Math.max(workArea.x + 6, x), workArea.x + workArea.width - winBounds.width - 6);
-  y = Math.min(Math.max(workArea.y + 6, y), workArea.y + workArea.height - winBounds.height - 6);
+  const workArea = screen.getDisplayNearestPoint(anchor).workArea;
+  const { x, y } = computeOverlayPosition({
+    point: anchor,
+    bounds: winBounds,
+    workArea,
+    gap: trayBounds ? 6 : 12,
+    inset: 6,
+  });
 
   win.setPosition(x, y, false);
   win.show();
